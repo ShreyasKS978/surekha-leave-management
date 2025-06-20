@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: surekha-postgres-leave
+    ports:
+      - "6568:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: leave_management
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  backend:
+    build: ./Backend
+    container_name: surekha-backend-leave
+    ports:
+      - "3011:3011"
+    depends_on:
+      - postgres
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: admin123
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: leave_management
+      PORT: 3011
+    volumes:
+      - ./Backend/uploads:/app/uploads
+    restart: unless-stopped
+
+  employee-leave:
+    build: ./employee-leave
+    container_name: surekha-employee-leave
+    ports:
+      - "8071:80"
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://backend:3011
+    restart: unless-stopped
+
+  hr-leave:
+    build: ./hr-leave
+    container_name: surekha-hr-leave
+    ports:
+      - "8072:80"
+    depends_on:
+      - backend
+    environment:
+      REACT_APP_API_URL: http://backend:3011
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
